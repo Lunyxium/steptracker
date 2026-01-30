@@ -3,7 +3,10 @@ import { Pedometer } from 'expo-sensors';
 import { PedometerData } from '../types';
 import { getStartOfToday } from '../utils/date';
 
-const POLL_INTERVAL = 5000; // Poll hardware counter every 5 seconds
+const POLL_INTERVAL = 5000;
+// Max realistic step rate: ~3 steps/sec (fast running)
+// Anything above is likely a false positive (phone pickup, unlock, etc.)
+const MAX_STEPS_PER_SECOND = 3;
 
 export function usePedometer(firestoreBaseline: number = 0): PedometerData {
 	const [steps, setSteps] = useState(0);
@@ -46,8 +49,6 @@ export function usePedometer(firestoreBaseline: number = 0): PedometerData {
 					setSteps(Math.max(initial.steps, firestoreBaseline));
 					usesPollRef.current = true;
 
-					// Poll periodically — reads from the OS hardware counter,
-					// not the accelerometer, so only real steps are counted
 					interval = setInterval(async () => {
 						try {
 							const result = await Pedometer.getStepCountAsync(start, new Date());
@@ -57,18 +58,43 @@ export function usePedometer(firestoreBaseline: number = 0): PedometerData {
 						}
 					}, POLL_INTERVAL);
 
-					return; // Success — don't set up subscription fallback
+					return;
 				} catch (e) {
-					console.log('Hardware step counter not available, falling back to watchStepCount');
+					// Log the actual error so we know why hardware polling failed
+					console.warn('getStepCountAsync failed:', e instanceof Error ? e.message : e);
+					console.warn('Falling back to watchStepCount (accelerometer-based, less accurate)');
 				}
 
-				// --- Fallback: accelerometer-based subscription ---
+				// --- Fallback: subscription with rate filter ---
 				usesPollRef.current = false;
 				const baseSteps = firestoreBaseline;
+				let acceptedSteps = 0;
+				let lastUpdateTime = Date.now();
+				let lastRawSteps = 0;
+
 				setSteps(firestoreBaseline);
 
 				subscription = Pedometer.watchStepCount((result) => {
-					setSteps(baseSteps + result.steps);
+					const now = Date.now();
+					const timeDelta = (now - lastUpdateTime) / 1000; // seconds
+					const stepDelta = result.steps - lastRawSteps;
+
+					// Filter: reject if step rate exceeds realistic walking/running pace
+					if (timeDelta > 0 && stepDelta > 0) {
+						const rate = stepDelta / timeDelta;
+
+						if (rate <= MAX_STEPS_PER_SECOND) {
+							// Realistic pace — accept all steps
+							acceptedSteps += stepDelta;
+						} else {
+							// Too fast — cap to max realistic rate
+							acceptedSteps += Math.round(MAX_STEPS_PER_SECOND * timeDelta);
+						}
+					}
+
+					lastRawSteps = result.steps;
+					lastUpdateTime = now;
+					setSteps(baseSteps + acceptedSteps);
 				});
 			} catch (e) {
 				setError('Failed to initialize pedometer');
