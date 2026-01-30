@@ -1,94 +1,192 @@
 # StepTracker
 
-A React Native step counter app built with Expo for the M335 school project.
+> Kompetenznachweis Modul 335 — Mobile-Applikation realisieren
 
-## Features
+Eine mobile Schrittzähler-App mit Echtzeit-Tracking, GPS-Distanzberechnung und Firebase-Backend — entwickelt mit React Native und Expo.
 
-- **Step Counting**: Real-time pedometer tracking using device sensors
-- **Distance Tracking**: GPS-based distance calculation
-- **Goal System**: Customizable daily step goals with haptic feedback
-- **History**: View your step history with weekly chart
-- **Firebase Backend**: Cloud sync with Firebase Auth and Firestore
+---
+
+## Highlights
+
+| Feature | Beschreibung |
+|---------|-------------|
+| **Schrittzähler** | Echtzeit-Pedometer via Hardware Step Counter mit Fallback-Mechanismus |
+| **GPS-Tracking** | Distanzberechnung mit Haversine-Formel, optional ein-/ausschaltbar |
+| **Tagesziel-System** | Konfigurierbares Ziel (5'000–20'000 Schritte) mit haptischem Feedback bei Erreichung |
+| **Verlauf** | 7-Tage-Balkendiagramm und tägliche Statistiken (Schritte, km, kcal) |
+| **Cloud-Sync** | Firebase Firestore mit Offline-Persistenz und Auto-Save alle 30 Sekunden |
+| **Authentifizierung** | Firebase Auth (Email/Passwort) mit Session-Persistenz und Remember Me |
+
+---
 
 ## Tech Stack
 
-- Expo SDK 54+ with TypeScript
-- Expo Router (file-based routing)
-- Firebase Auth (Email/Password)
-- Firebase Firestore
-- expo-sensors (Pedometer)
-- expo-location (GPS)
-- expo-haptics (Vibration feedback)
+| Technologie | Version | Zweck |
+|-------------|---------|-------|
+| [React Native](https://reactnative.dev/) | 0.81.5 | UI-Framework |
+| [Expo SDK](https://expo.dev/) | 54 | Build-Pipeline, Sensor-APIs, Routing |
+| [TypeScript](https://www.typescriptlang.org/) | 5.9.2 | Typsichere Entwicklung |
+| [Firebase](https://firebase.google.com/) | 12.8.0 | Auth + Firestore |
+| [Expo Router](https://docs.expo.dev/router/introduction/) | 6.0.22 | File-based Navigation |
 
-## Getting Started
+### Sensoren und Aktoren
 
-### Prerequisites
+| Komponente | Library | Typ |
+|------------|---------|-----|
+| Schrittzähler | `expo-sensors` | Sensor |
+| GPS / Location | `expo-location` | Sensor |
+| Vibration | `expo-haptics` | Aktor |
 
-- Node.js 18+
-- Expo Go app on your Android device
-- Firebase project (for cloud features)
+---
 
-### Installation
-
-```bash
-# Install dependencies (use PowerShell on Windows/WSL)
-npm install
-
-# Create environment file
-cp .env.example .env
-# Edit .env with your Firebase credentials
-
-# Start development server
-npx expo start
-```
-
-### Firebase Setup
-
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Email/Password authentication
-3. Create a Firestore database
-4. Copy your web app config to `.env`
-
-### Running on Device
-
-1. Install Expo Go on your Android phone
-2. Run `npx expo start`
-3. Scan the QR code with Expo Go
-
-**Note**: Pedometer requires a physical device - it won't work in emulators.
-
-## Project Structure
+## Projektstruktur
 
 ```
 steptracker/
-├── app/                    # Expo Router screens
-│   ├── (tabs)/            # Tab navigator screens
-│   ├── _layout.tsx        # Root layout
-│   ├── index.tsx          # Entry redirect
-│   └── login.tsx          # Login screen
-├── components/            # Reusable components
-│   ├── ui/               # Generic UI (Button, Card, ProgressRing)
-│   └── features/         # Feature components (StepCounter, StatsCard)
-├── hooks/                 # Custom React hooks
-├── services/              # Firebase and external services
-├── constants/             # Theme and config
-├── types/                 # TypeScript definitions
-└── utils/                 # Helper functions
+├── app/                          # Screens (Expo Router)
+│   ├── _layout.tsx               # Root Layout mit AuthProvider
+│   ├── index.tsx                 # Entry Point (Auth-Redirect)
+│   ├── login.tsx                 # Login / Registrierung
+│   └── (tabs)/                   # Tab-Navigator
+│       ├── index.tsx             # Home (Schrittzähler + Stats)
+│       ├── history.tsx           # Verlauf (7-Tage-Chart)
+│       └── settings.tsx          # Einstellungen
+├── components/
+│   ├── ui/                       # Button, Card, ProgressRing
+│   └── features/                 # StepCounter, StatsCard, HistoryChart
+├── hooks/                        # useAuth, usePedometer, useLocation, useStepData
+├── services/                     # Firebase Init, Firestore CRUD, Haptic Feedback
+├── constants/                    # Theme Tokens, App-Konfiguration
+├── utils/                        # Haversine, Formatierung, Datumshilfen
+└── types/                        # TypeScript Interfaces
 ```
 
-## Building APK
+---
 
-```bash
-# Install EAS CLI
-npm install -g eas-cli
+## Voraussetzungen
 
-# Login to Expo
-eas login
+- **Node.js** >= 18
+- **npm**
+- **EAS CLI** — `npm install -g eas-cli`
+- **Expo Account** — `npx expo register` (kostenlos)
+- **Firebase-Projekt** mit Email/Password Auth und Firestore
+- **Physisches Android-Gerät** (Pedometer funktioniert nicht im Emulator)
 
-# Build APK
+---
+
+## Installation und Setup
+
+### 1. Repository klonen
+
+```powershell
+git clone https://github.com/Lunyxium/steptracker.git
+cd steptracker
+```
+
+### 2. Dependencies installieren
+
+```powershell
+npm install
+```
+
+### 3. Firebase konfigurieren
+
+`.env` Datei im Projekt-Root erstellen (siehe `.env.example`):
+
+```env
+EXPO_PUBLIC_FIREBASE_API_KEY=<dein-api-key>
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=<project-id>
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=<project-id>.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
+EXPO_PUBLIC_FIREBASE_APP_ID=<app-id>
+```
+
+> Die Werte findest du in der [Firebase Console](https://console.firebase.google.com) unter Projekteinstellungen.
+
+### 4. Firebase-Dienste aktivieren
+
+1. **Authentication** — Sign-in method — Email/Password aktivieren
+2. **Firestore Database** erstellen — Production-Modus
+3. **Security Rules** setzen:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+### 5. Development Build erstellen
+
+> **Wichtig:** Expo Go reicht fuer dieses Projekt nicht aus. Der Schrittzaehler braucht die `ACTIVITY_RECOGNITION`-Permission, die nur in einem Development Build verfuegbar ist.
+
+```powershell
+npx expo install expo-dev-client
+eas build --platform android --profile development
+npx expo start --dev-client
+```
+
+Geraet und PC muessen im gleichen WLAN sein.
+
+---
+
+## APK erstellen
+
+### Preview (Abgabe / Testing)
+
+```powershell
 eas build --platform android --profile preview
 ```
 
-## License
+Erzeugt eine standalone `.apk` die ohne Dev Server funktioniert.
 
-School project - M335 React Native
+### Production (Play Store)
+
+```powershell
+eas build --platform android --profile production
+```
+
+Erzeugt ein signiertes `.aab` (Android App Bundle) fuer den Google Play Store.
+
+---
+
+## Firestore-Datenstruktur
+
+```
+users/{userId}/
+├── steps/{YYYY-MM-DD}          # Taegliche Eintraege
+│   ├── steps: number
+│   ├── distance: number (km)
+│   ├── calories: number
+│   ├── goalReached: boolean
+│   └── updatedAt: Timestamp
+└── settings/preferences        # User-Einstellungen
+    ├── dailyGoal: number
+    ├── gpsEnabled: boolean
+    └── vibrationEnabled: boolean
+```
+
+---
+
+## Android Permissions
+
+| Permission | Zweck | Runtime-Request |
+|------------|-------|-----------------|
+| `ACTIVITY_RECOGNITION` | Schrittzaehler | Ja (Android 10+) |
+| `ACCESS_FINE_LOCATION` | GPS-Tracking | Ja |
+| `ACCESS_COARSE_LOCATION` | GPS-Fallback | Ja |
+| `VIBRATE` | Haptisches Feedback | Nein |
+
+---
+
+## Lizenz
+
+Schulprojekt — Modul 335, Applikationsentwicklung EFZ
