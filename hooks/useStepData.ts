@@ -61,7 +61,10 @@ export function useStepData(userId: string | undefined): UseStepDataResult {
 
   const updateTodayData = useCallback(
     async (steps: number, distance: number, goalReached: boolean) => {
-      if (!userId) return;
+      if (!userId || loading) return;
+
+      // Never overwrite Firestore with lower values
+      if (todayData && steps < todayData.steps) return;
 
       const today = getTodayString();
       const calories = Math.round(steps * APP_CONFIG.CALORIES_PER_STEP);
@@ -93,7 +96,7 @@ export function useStepData(userId: string | undefined): UseStepDataResult {
         console.error('Failed to save step data:', e);
       }
     },
-    [userId]
+    [userId, loading, todayData]
   );
 
   const updateSettings = useCallback(
