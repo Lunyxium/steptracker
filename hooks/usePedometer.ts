@@ -3,17 +3,34 @@ import { Pedometer } from 'expo-sensors';
 import { PedometerData } from '../types';
 import { getStartOfToday } from '../utils/date';
 
-export function usePedometer(): PedometerData {
+export function usePedometer(firestoreBaseline: number = 0): PedometerData {
   const [steps, setSteps] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const baseStepsRef = useRef(0);
+  const hadHistoricalRef = useRef(false);
+
+  // When Firestore data arrives and historical steps weren't available,
+  // use Firestore as the baseline so steps survive app restarts
+  useEffect(() => {
+    if (!hadHistoricalRef.current && firestoreBaseline > baseStepsRef.current) {
+      baseStepsRef.current = firestoreBaseline;
+      setSteps((prev) => Math.max(prev, firestoreBaseline));
+    }
+  }, [firestoreBaseline]);
 
   useEffect(() => {
     let subscription: Pedometer.Subscription | null = null;
 
     const subscribe = async () => {
       try {
+        // Request runtime permission (required on Android 10+)
+        const { status } = await Pedometer.requestPermissionsAsync();
+        if (status !== 'granted') {
+          setError('Motion permission denied');
+          return;
+        }
+
         const available = await Pedometer.isAvailableAsync();
         setIsAvailable(available);
 
@@ -29,11 +46,13 @@ export function usePedometer(): PedometerData {
         try {
           const result = await Pedometer.getStepCountAsync(start, end);
           baseStepsRef.current = result.steps;
+          hadHistoricalRef.current = true;
           setSteps(result.steps);
         } catch (e) {
-          // Some devices don't support historical step count
-          console.log('Historical step count not available');
-          baseStepsRef.current = 0;
+          // Historical steps not available — use Firestore baseline as fallback
+          console.log('Historical step count not available, using Firestore baseline');
+          baseStepsRef.current = firestoreBaseline;
+          setSteps(firestoreBaseline);
         }
 
         // Subscribe to live updates
@@ -53,6 +72,7 @@ export function usePedometer(): PedometerData {
         subscription.remove();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { steps, isAvailable, error };
