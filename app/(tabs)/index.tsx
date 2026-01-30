@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +19,6 @@ export default function HomeScreen() {
   const { settings, todayData, updateTodayData, loading } = useStepData(user?.uid);
   const { steps, isAvailable: pedometerAvailable } = usePedometer(todayData?.steps ?? 0);
   const { distance: gpsDistance } = useLocation(settings.gpsEnabled, todayData?.distance ?? 0);
-  const lastSaveRef = useRef(Date.now());
-
   // Use GPS distance when available, otherwise estimate from steps
   const stepEstimatedDistance = steps * APP_CONFIG.STEP_LENGTH_KM;
   const distance = settings.gpsEnabled ? Math.max(gpsDistance, stepEstimatedDistance) : stepEstimatedDistance;
@@ -29,6 +27,14 @@ export default function HomeScreen() {
   const percentage = calculatePercentage(steps, settings.dailyGoal);
   const goalReached = steps >= settings.dailyGoal;
 
+  // Refs to give the interval access to current values without re-creating it
+  const stepsRef = useRef(steps);
+  const distanceRef = useRef(distance);
+  const goalReachedRef = useRef(goalReached);
+  stepsRef.current = steps;
+  distanceRef.current = distance;
+  goalReachedRef.current = goalReached;
+
   // Check for goal achievement vibration
   useEffect(() => {
     if (steps > 0) {
@@ -36,23 +42,18 @@ export default function HomeScreen() {
     }
   }, [steps, settings.dailyGoal, settings.vibrationEnabled]);
 
-  // Auto-save every 30 seconds (only after Firestore data is loaded)
-  useEffect(() => {
-    if (loading || steps === 0) return;
-    const now = Date.now();
-    if (now - lastSaveRef.current >= APP_CONFIG.AUTO_SAVE_INTERVAL) {
-      updateTodayData(steps, distance, goalReached);
-      lastSaveRef.current = now;
-    }
-  }, [loading, steps, distance, goalReached, updateTodayData]);
-
-  // Save on significant changes (only after Firestore data is loaded)
+  // Auto-save on a real interval — fires regardless of step changes
   useEffect(() => {
     if (loading) return;
-    if (steps > 0 && steps % 100 === 0) {
-      updateTodayData(steps, distance, goalReached);
-    }
-  }, [loading, steps, distance, goalReached, updateTodayData]);
+
+    const interval = setInterval(() => {
+      if (stepsRef.current > 0) {
+        updateTodayData(stepsRef.current, distanceRef.current, goalReachedRef.current);
+      }
+    }, APP_CONFIG.AUTO_SAVE_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [loading, updateTodayData]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
