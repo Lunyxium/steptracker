@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app:*)",
+      "Bash(npx create-expo-app@latest steptracker-temp -t expo-template-blank-typescript --no-install)",
+      "Bash(npm install:*)",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''; npm install expo-router expo-sensors expo-location expo-haptics firebase @react-native-async-storage/async-storage react-native-safe-area-context react-native-screens expo-linking expo-constants expo-system-ui react-native-svg @expo/vector-icons\")",
+      "Bash(powershell.exe -Command \"cd ''''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''''; npx tsc --noEmit 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''; npx expo install expo-router expo-sensors expo-location expo-haptics expo-constants expo-system-ui expo-linking react-native-safe-area-context react-native-screens react-native-svg @expo/vector-icons @react-native-async-storage/async-storage\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''; npm install firebase\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''; npm install firebase react-dom@19.1.0 --legacy-peer-deps\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\Users\\\\Matt\\\\IdeaProjects\\\\steptracker''; Remove-Item -Recurse -Force node_modules, package-lock.json; npm install\")",
+      "Bash(sudo npm install:*)"
+    ]
+  }
+}
