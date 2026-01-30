@@ -4,6 +4,7 @@
 
 Eine mobile Schrittzähler-App mit Echtzeit-Tracking, GPS-Distanzberechnung und Firebase-Backend — entwickelt mit React Native und Expo.
 
+## 📚 [→ Dokumentation im Wiki](https://github.com/Lunyxium/steptracker/wiki)
 ---
 
 ## Highlights
