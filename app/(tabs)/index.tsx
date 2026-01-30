@@ -16,10 +16,14 @@ import { APP_CONFIG } from '../../constants/config';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { steps, isAvailable: pedometerAvailable } = usePedometer();
-  const { settings, updateTodayData } = useStepData(user?.uid);
-  const { distance } = useLocation(settings.gpsEnabled);
+  const { settings, todayData, updateTodayData } = useStepData(user?.uid);
+  const { steps, isAvailable: pedometerAvailable } = usePedometer(todayData?.steps ?? 0);
+  const { distance: gpsDistance } = useLocation(settings.gpsEnabled, todayData?.distance ?? 0);
   const lastSaveRef = useRef(0);
+
+  // Use GPS distance when available, otherwise estimate from steps
+  const stepEstimatedDistance = steps * APP_CONFIG.STEP_LENGTH_KM;
+  const distance = settings.gpsEnabled ? Math.max(gpsDistance, stepEstimatedDistance) : stepEstimatedDistance;
 
   const calories = Math.round(steps * APP_CONFIG.CALORIES_PER_STEP);
   const percentage = calculatePercentage(steps, settings.dailyGoal);

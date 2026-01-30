@@ -8,13 +8,23 @@ interface LocationCoords {
   longitude: number;
 }
 
-export function useLocation(enabled: boolean): LocationData {
-  const [distance, setDistance] = useState(0);
+export function useLocation(enabled: boolean, initialDistance: number = 0): LocationData {
+  const [distance, setDistance] = useState(initialDistance);
   const [isTracking, setIsTracking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastPositionRef = useRef<LocationCoords | null>(null);
   const watcherRef = useRef<Location.LocationSubscription | null>(null);
-  const totalDistanceRef = useRef(0);
+  const totalDistanceRef = useRef(initialDistance);
+  const initialAppliedRef = useRef(false);
+
+  // Restore distance from Firestore when data loads
+  useEffect(() => {
+    if (!initialAppliedRef.current && initialDistance > totalDistanceRef.current) {
+      totalDistanceRef.current = initialDistance;
+      setDistance(initialDistance);
+      initialAppliedRef.current = true;
+    }
+  }, [initialDistance]);
 
   const stopTracking = useCallback(() => {
     if (watcherRef.current) {
