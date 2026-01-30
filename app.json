@@ -42,6 +42,12 @@
           "locationWhenInUsePermission": "Allow StepTracker to access your location to calculate distance."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2129b439-331c-4ce9-8dbc-0d6f505d3cbb"
+      }
+    }
   }
 }
