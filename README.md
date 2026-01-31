@@ -18,6 +18,8 @@ Eine mobile Schrittzähler-App mit Echtzeit-Tracking, GPS-Distanzberechnung und 
 | **Cloud-Sync** | Firebase Firestore mit Offline-Persistenz und Auto-Save alle 30 Sekunden |
 | **Authentifizierung** | Firebase Auth (Email/Passwort) mit Session-Persistenz und Remember Me |
 
+<div align="center"><img src="https://raw.githubusercontent.com/Lunyxium/steptracker/master/documentation/Screenshot_StepTracker.jpeg" width="40%"></div>
+
 ---
 
 ## Tech Stack
